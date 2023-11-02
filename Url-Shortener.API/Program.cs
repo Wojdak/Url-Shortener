@@ -1,6 +1,7 @@
 
 using Azure.Storage.Blobs;
 using System.Text;
+using Url_Shortener.API.Models;
 using Url_Shortener.API.Services;
 
 namespace Url_Shortener.API
@@ -25,9 +26,10 @@ namespace Url_Shortener.API
             {
                 options.AddPolicy("AllowAnyOrigin", builder =>
                 {
-                    builder.AllowAnyOrigin()
-                           .AllowAnyHeader()
-                           .AllowAnyMethod();
+                    builder.AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .SetIsOriginAllowed(origin => true)
+                            .AllowCredentials();
                 });
             });
 
@@ -44,14 +46,16 @@ namespace Url_Shortener.API
 
             app.UseCors("AllowAnyOrigin");
 
+            app.UseRouting();
+
             app.UseAuthorization();
 
-            app.MapPost("/shorten", async (string longUrl, IUrlStorageService _urlStorageService, HttpContext _httpContext) =>
+            app.MapPost("/shorten", async (ShortenUrlRequest request, IUrlStorageService _urlStorageService, HttpContext _httpContext) =>
             {
-                if(!Uri.TryCreate(longUrl, UriKind.Absolute, out _))
+                if(!Uri.TryCreate(request.LongUrl, UriKind.Absolute, out _))
                     return Results.BadRequest("URL is invalid");
 
-                var shortUrl = await _urlStorageService.SaveUrlMappingAsync(longUrl);
+                var shortUrl = await _urlStorageService.SaveUrlMappingAsync(request.LongUrl);
 
                 return Results.Ok($"{_httpContext.Request.Scheme}://{_httpContext.Request.Host}/{shortUrl}");
             });

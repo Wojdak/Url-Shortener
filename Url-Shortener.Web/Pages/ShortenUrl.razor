@@ -1,0 +1,41 @@
+﻿@page "/"
+@inject HttpClient _http
+
+
+<h3>ShortenURL</h3>
+<p>Paste your long URL, click the submit button and recieve a short url!</p>
+
+<EditForm Model="@urlForm" OnValidSubmit="@HandleSubmit">
+    <div class="form-group">
+        <label for="longUrl">Enter the URL to shorten:</label>
+        <InputText id="longUrl" class="form-control" @bind-Value="urlForm.LongUrl"></InputText>
+        <ValidationMessage For="@(() => urlForm.LongUrl)"></ValidationMessage>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Shorten</button>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(shortenedUrl))
+{
+    <p>Shortened URL: <a href="@shortenedUrl" target="_blank">@shortenedUrl</a></p>
+}
+
+@code {
+    private UrlForm urlForm = new UrlForm();
+    private string shortenedUrl = string.Empty;
+
+    private async Task HandleSubmit()
+    {
+        var payload = new { LongUrl = urlForm.LongUrl };
+        var response = await _http.PostAsJsonAsync("/shorten", payload);
+
+        var urlAsString = await response.Content.ReadAsStringAsync();
+
+        shortenedUrl = response.IsSuccessStatusCode ? urlAsString.Replace("\"", "") : $"Error: {response.StatusCode}";
+    }
+
+    public class UrlForm
+    {
+        public string LongUrl { get; set; } = string.Empty;
+    }
+}
