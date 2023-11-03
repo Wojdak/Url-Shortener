@@ -1,4 +1,5 @@
 
+using Azure;
 using Azure.Storage.Blobs;
 using System.Text;
 using Url_Shortener.API.Models;
@@ -22,6 +23,7 @@ namespace Url_Shortener.API
 
             builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration["BlobStorageConnectionString"]));
             builder.Services.AddScoped<IUrlStorageService, UrlStorageService>();
+            builder.Services.AddScoped<IUrlManager, UrlManager>();
 
             builder.Services.AddCors(options =>
             {
@@ -58,27 +60,50 @@ namespace Url_Shortener.API
             app.UseAuthorization();
 
             // Define the POST endpoint for shortening URLs.
-            app.MapPost("/shorten", async (ShortenUrlRequest request, IUrlStorageService _urlStorageService, HttpContext _httpContext) =>
+            app.MapPost("/shorten", async (ShortenUrlRequest request, IUrlStorageService _urlStorageService, IUrlManager _urlManager, HttpContext _context) =>
             {
-                if (!Uri.TryCreate(request.LongUrl, UriKind.Absolute, out _))
-                    return Results.BadRequest("URL is invalid");
+                // Create the short URL
+                string shortUrl;
 
-                var shortUrl = await _urlStorageService.SaveUrlMappingAsync(request.LongUrl, request.CustomUrl);
+                try
+                {
+                    shortUrl = await _urlManager.ShortenUrlAsync(request);
 
-                if (shortUrl is null)
-                    return Results.BadRequest("Custom URL already exists");
+                }
+                catch (ArgumentException ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
 
-                return Results.Ok($"{_httpContext.Request.Scheme}://{_httpContext.Request.Host}/{shortUrl}");
+                // Save the short URL to Azure Blob Storage
+                try
+                {
+                    await _urlStorageService.SaveUrlMappingAsync(shortUrl, request.LongUrl);
+                    return Results.Ok(new StringBuilder($"{_context.Request.Scheme}://{_context.Request.Host}/{shortUrl}").ToString());
+                } 
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
+
             });
 
             // Define the GET endpoint for redirecting short URLs to their original URLs.
             app.MapGet("/{shortUrl}", async (string shortUrl, IUrlStorageService _urlStorageService) =>
             {
-                string longUrl = await _urlStorageService.GetOriginalUrlAsync(shortUrl);
+                // Retrieve the long URL form Azure Blob Storage
+                string longUrl;
 
-                if (string.IsNullOrEmpty(longUrl))
-                    return Results.NotFound("URL not found");
+                try
+                {
+                    longUrl = await _urlStorageService.GetOriginalUrlAsync(shortUrl);
+                } 
+                catch (Exception ex)
+                {
+                    return Results.NotFound(ex.Message);
+                }
 
+                // Redirect to the long URL
                 return Results.Redirect(longUrl);
             });
 

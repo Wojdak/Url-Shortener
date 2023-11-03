@@ -18,11 +18,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
+    <ProjectReference Include="..\Url-Shortener.Web\Url-Shortener.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Url-Shortener.Web\Url-Shortener.Web.csproj" />
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

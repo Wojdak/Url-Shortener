@@ -1,4 +1,5 @@
-﻿using Azure.Storage.Blobs;
+﻿using Azure;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,34 +13,28 @@ namespace Url_Shortener.API.Services
     {
         private BlobServiceClient _blobServiceClient;
         private readonly IConfiguration _configuration;
+        private BlobContainerClient containerClient;
 
         #region Constructor
         public UrlStorageService(BlobServiceClient blobServiceClienst, IConfiguration configuration)
         {
             _blobServiceClient = blobServiceClienst;
             _configuration = configuration;
+            containerClient = _blobServiceClient.GetBlobContainerClient(_configuration["containerName"]);
         }
 
         #endregion
 
         #region Public Methods
-
-        /// <summary>
-        /// Retrieves the original URL based on a given short URL.
-        /// </summary>
-        /// <param name="shortUrl">The short URL identifier.</param>
-        /// <returns>The original URL if found; otherwise, null.</returns>
-        public async Task<string?> GetOriginalUrlAsync(string shortUrl)
+        public async Task<string> GetOriginalUrlAsync(string shortUrl)
         {
-            var containerClient = _blobServiceClient.GetBlobContainerClient(_configuration["containerName"]);
-
             if (!await containerClient.ExistsAsync())
-                return null;
+                throw new Exception("There was an error while accessing the short URL");
 
             var blobClient = containerClient.GetBlobClient(shortUrl);
 
             if (!await blobClient.ExistsAsync())
-                return null;
+                throw new Exception("URL not found");
 
             BlobDownloadInfo download = await blobClient.DownloadAsync();
             using (StreamReader reader = new StreamReader(download.Content))
@@ -48,58 +43,29 @@ namespace Url_Shortener.API.Services
             }
         }
 
-        /// <summary>
-        /// Saves the mapping of a long URL to a short URL in Blob Storage.
-        /// </summary>
-        /// <param name="longUrl">The original long URL.</param>
-        /// <param name="customUrl">An optional custom short URL identifier.</param>
-        /// <returns>The short URL if successful; otherwise, null.</returns>
-        public async Task<string?> SaveUrlMappingAsync(string longUrl, string? customUrl)
+        public async Task SaveUrlMappingAsync(string shortUrl, string longUrl)
         {
-            var containerClient = _blobServiceClient.GetBlobContainerClient(_configuration["containerName"]);
-
-            string shortUrl = customUrl ?? GenerateShortUrl(longUrl); // Use customUrl if it exists, use randomly generated url
-
-            var blobClient = containerClient.GetBlobClient(shortUrl);
-
-            if (customUrl != null && await blobClient.ExistsAsync()) // Return null if customUrl already exists in Blob Storage
+            try
             {
-                return null;
+                var blobClient = containerClient.GetBlobClient(shortUrl);
+
+                var bytes = Encoding.UTF8.GetBytes(longUrl);
+
+                using (var stream = new MemoryStream(bytes))
+                {
+                    await blobClient.UploadAsync(stream, true);
+                }
             }
-
-            var bytes = Encoding.UTF8.GetBytes(longUrl);
-
-            using (var stream = new MemoryStream(bytes))
+            catch (RequestFailedException ex)
             {
-                await blobClient.UploadAsync(stream, true);
+                throw new Exception(ex.Message);
             }
-
-            return shortUrl;
         }
 
-        #endregion
-
-        #region Private Helper Methods
-
-        /// <summary>
-        /// Generates a short URL identifier from a long URL using SHA256 hashing.
-        /// </summary>
-        /// <param name="longUrl">The long URL to be shortened.</param>
-        /// <returns>A short URL identifier.</returns>
-        public string GenerateShortUrl(string longUrl)
+        public async Task<bool> CheckIfShortUrlExistsAsync(string shortUrl)
         {
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(longUrl));
-                StringBuilder _builder = new StringBuilder();
-
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    _builder.Append(bytes[i].ToString("x2"));
-                }
-
-                return _builder.ToString().Substring(0, 7);
-            }
+            var blobClient = containerClient.GetBlobClient(shortUrl);
+            return await blobClient.ExistsAsync();
         }
 
         #endregion
