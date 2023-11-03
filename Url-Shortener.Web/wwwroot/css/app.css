@@ -103,18 +103,16 @@ a, .btn-link {
         content: var(--blazor-load-percentage-text, "Loading");
     }
 
-
-
-.github-logo {
-    width: 10%;
-    height: auto;
-}
-
 .card {
     background-color: #E0E2DB;
     color: black;
+    width: auto;
     border-radius: 9px;
     box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+}
+
+.card-body {
+    width: auto;
 }
 
 .btn {
@@ -151,8 +149,13 @@ a, .btn-link {
 }
 
 .reset-button {
-    width: 100%;
-    font-size: 1rem;
+    width: 75%;
+    font-size: 0.9rem;
+}
+
+.url-link {
+    white-space: nowrap;
+    display: block;
 }
 
 @media only screen and (max-width: 600px) {

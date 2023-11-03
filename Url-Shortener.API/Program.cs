@@ -49,6 +49,12 @@ namespace Url_Shortener.API
 
             app.UseRouting();
 
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+
+            app.UseBlazorFrameworkFiles();
+            app.MapFallbackToFile("index.html");
+
             app.UseAuthorization();
 
             // Define the POST endpoint for shortening URLs.

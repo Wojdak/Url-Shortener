@@ -3,7 +3,7 @@
 @inject IJSRuntime JSRuntime
 
 <div class="d-flex flex-column justify-content-center align-items-center mb-5 info">
-    <h1>LinkSlice</h1>
+    <h1>UrlSlice</h1>
     <p class="p-info">View the code on GitHub: <a href="https://github.com/Wojdak/Url-Shortener" target="_blank">GitHub Repository</a></p>
 </div>
 
@@ -17,7 +17,7 @@
                     <p class="mb-2">Shorten URL:</p>
 
                     <div class="d-flex justify-content-center align-items-center mb-3">
-                        <a href="@shortenedUrl" target="_blank" class="mr-2">@shortenedUrl</a>
+                        <a href="@shortenedUrl" target="_blank" class="mr-2 url-link">@shortenedUrl</a>
                         <!-- Conditionally render the "Copy to Clipboard" button -->
                         @if (!shortenedUrl.StartsWith("Error:"))
                         {
