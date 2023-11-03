@@ -2,8 +2,8 @@
 {
     public interface IUrlStorageService
     {
-        Task<string?> SaveUrlMappingAsync(string longUrl);
-        Task<string> GetOriginalUrlAsync(string shortUrl);
+        Task<string?> SaveUrlMappingAsync(string longUrl, string? customUrl);
+        Task<string?> GetOriginalUrlAsync(string shortUrl);
         string GenerateShortUrl(string longUrl);
     }
 }

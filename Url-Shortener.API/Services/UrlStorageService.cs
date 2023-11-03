@@ -5,17 +5,30 @@ using System.Text;
 
 namespace Url_Shortener.API.Services
 {
+    /// <summary>
+    /// Service for storing and retrieving URL mappings in Azure Blob Storage.
+    /// </summary>
     public class UrlStorageService : IUrlStorageService
     {
         private BlobServiceClient _blobServiceClient;
         private readonly IConfiguration _configuration;
 
+        #region Constructor
         public UrlStorageService(BlobServiceClient blobServiceClienst, IConfiguration configuration)
         {
             _blobServiceClient = blobServiceClienst;
             _configuration = configuration;
         }
 
+        #endregion
+
+        #region Public Methods
+
+        /// <summary>
+        /// Retrieves the original URL based on a given short URL.
+        /// </summary>
+        /// <param name="shortUrl">The short URL identifier.</param>
+        /// <returns>The original URL if found; otherwise, null.</returns>
         public async Task<string?> GetOriginalUrlAsync(string shortUrl)
         {
             var containerClient = _blobServiceClient.GetBlobContainerClient(_configuration["containerName"]);
@@ -35,13 +48,24 @@ namespace Url_Shortener.API.Services
             }
         }
 
-        public async Task<string> SaveUrlMappingAsync(string longUrl)
+        /// <summary>
+        /// Saves the mapping of a long URL to a short URL in Blob Storage.
+        /// </summary>
+        /// <param name="longUrl">The original long URL.</param>
+        /// <param name="customUrl">An optional custom short URL identifier.</param>
+        /// <returns>The short URL if successful; otherwise, null.</returns>
+        public async Task<string?> SaveUrlMappingAsync(string longUrl, string? customUrl)
         {
             var containerClient = _blobServiceClient.GetBlobContainerClient(_configuration["containerName"]);
 
-            string shortUrl = GenerateShortUrl(longUrl);
+            string shortUrl = customUrl ?? GenerateShortUrl(longUrl); // Use customUrl if it exists, use randomly generated url
 
             var blobClient = containerClient.GetBlobClient(shortUrl);
+
+            if (customUrl != null && await blobClient.ExistsAsync()) // Return null if customUrl already exists in Blob Storage
+            {
+                return null;
+            }
 
             var bytes = Encoding.UTF8.GetBytes(longUrl);
 
@@ -53,6 +77,15 @@ namespace Url_Shortener.API.Services
             return shortUrl;
         }
 
+        #endregion
+
+        #region Private Helper Methods
+
+        /// <summary>
+        /// Generates a short URL identifier from a long URL using SHA256 hashing.
+        /// </summary>
+        /// <param name="longUrl">The long URL to be shortened.</param>
+        /// <returns>A short URL identifier.</returns>
         public string GenerateShortUrl(string longUrl)
         {
             using (SHA256 sha256Hash = SHA256.Create())
@@ -69,5 +102,6 @@ namespace Url_Shortener.API.Services
             }
         }
 
+        #endregion
     }
 }

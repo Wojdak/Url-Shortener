@@ -3,6 +3,7 @@ using Azure.Storage.Blobs;
 using System.Text;
 using Url_Shortener.API.Models;
 using Url_Shortener.API.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Url_Shortener.API
 {
@@ -50,16 +51,21 @@ namespace Url_Shortener.API
 
             app.UseAuthorization();
 
+            // Define the POST endpoint for shortening URLs.
             app.MapPost("/shorten", async (ShortenUrlRequest request, IUrlStorageService _urlStorageService, HttpContext _httpContext) =>
             {
-                if(!Uri.TryCreate(request.LongUrl, UriKind.Absolute, out _))
+                if (!Uri.TryCreate(request.LongUrl, UriKind.Absolute, out _))
                     return Results.BadRequest("URL is invalid");
 
-                var shortUrl = await _urlStorageService.SaveUrlMappingAsync(request.LongUrl);
+                var shortUrl = await _urlStorageService.SaveUrlMappingAsync(request.LongUrl, request.CustomUrl);
+
+                if (shortUrl is null)
+                    return Results.BadRequest("Custom URL already exists");
 
                 return Results.Ok($"{_httpContext.Request.Scheme}://{_httpContext.Request.Host}/{shortUrl}");
             });
 
+            // Define the GET endpoint for redirecting short URLs to their original URLs.
             app.MapGet("/{shortUrl}", async (string shortUrl, IUrlStorageService _urlStorageService) =>
             {
                 string longUrl = await _urlStorageService.GetOriginalUrlAsync(shortUrl);

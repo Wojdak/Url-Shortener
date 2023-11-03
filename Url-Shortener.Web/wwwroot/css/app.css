@@ -1,7 +1,10 @@
 @import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;500;700&display=swap');
 
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #212529;
+    color: white;
 }
 
 h1:focus {
@@ -100,7 +103,62 @@ a, .btn-link {
         content: var(--blazor-load-percentage-text, "Loading");
     }
 
+
+
 .github-logo {
-    height: 50px;
-    width: 80px;
+    width: 10%;
+    height: auto;
+}
+
+.card {
+    background-color: #E0E2DB;
+    color: black;
+    border-radius: 9px;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+}
+
+.btn {
+    background-color: #CA3C25;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    width: 70%;
+    padding: 2.5% 0;
+}
+
+.btn:hover {
+    color: white;
+    background-color: #b33520;
+}
+
+.card-title {
+    font-size: 1.2rem;
+}
+
+.input-field {
+    font-size: 1rem;
+    border: 1px solid #999999;
+}
+
+.form-control:focus, .form-control:active {
+    border-color: black;
+    box-shadow: 0 1px 1px #999999;
+}
+
+.copy-button {
+    margin-left: 3%;
+    cursor: pointer;
+}
+
+.reset-button {
+    width: 100%;
+    font-size: 1rem;
+}
+
+@media only screen and (max-width: 600px) {
+    .p-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
 }
