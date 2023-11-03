@@ -36,6 +36,11 @@ namespace Url_Shortener.API
                 });
             });
 
+            builder.Services.AddMemoryCache(options =>
+            {
+                options.SizeLimit = 40 * 1024 * 1024; // 40MB limit
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
